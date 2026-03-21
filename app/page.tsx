@@ -10,7 +10,7 @@ export default function Home() {
           </p>
           <div className="space-y-4">
             <h1 className="max-w-2xl font-display text-5xl leading-tight text-slate-900 sm:text-6xl">
-              A quick AI usage audit for modern teams.
+              Find out how good you actually are at AI.
             </h1>
             <p className="max-w-xl text-lg leading-8 text-slate-600">
               Answer a few practical questions about how you use AI today and get
@@ -44,9 +44,8 @@ export default function Home() {
           <div className="rounded-3xl border border-[var(--border)] bg-[var(--panel-soft)] p-5">
             <p className="text-sm font-medium text-slate-500">Private by default</p>
             <p className="mt-3 text-sm leading-6 text-slate-700">
-              Your form and report are stored in this browser session only, and AI
-              report generation is sent server-side when enabled. No account needed.
-              Takes about 2 minutes.
+              Nothing is stored or sent anywhere except to generate your report.
+              No account needed. Takes about 2 minutes.
             </p>
           </div>
         </div>
