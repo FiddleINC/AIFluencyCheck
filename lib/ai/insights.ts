@@ -3,6 +3,8 @@ import type {
   AuditResult,
   GeneratedReport,
   ProjectIdea,
+  ResourceItem,
+  ResourceSection,
   ScoreCategory,
 } from "@/lib/types";
 
@@ -19,6 +21,47 @@ function trimText(value: string, maxLength: number) {
 }
 
 const EXPECTED_CATEGORY_NAMES = ["Adoption", "Prompting", "Workflow", "Judgment"] as const;
+const EXPECTED_RESOURCE_CATEGORIES = ["Free courses", "Tools to try", "Reads"] as const;
+
+function normalizeUrl(url: string) {
+  const trimmed = url.trim();
+
+  if (!trimmed) {
+    return "";
+  }
+
+  if (trimmed.startsWith("https://")) {
+    return trimmed;
+  }
+
+  if (trimmed.startsWith("http://")) {
+    return `https://${trimmed.slice("http://".length)}`;
+  }
+
+  if (/^[\w.-]+\.[a-z]{2,}/i.test(trimmed)) {
+    return `https://${trimmed}`;
+  }
+
+  return "";
+}
+
+function normalizeResourceCategory(value: string) {
+  const normalized = value.toLowerCase().trim();
+
+  if (normalized.includes("course") || normalized.includes("learn") || normalized.includes("training")) {
+    return "Free courses" as const;
+  }
+
+  if (normalized.includes("tool") || normalized.includes("product") || normalized.includes("software")) {
+    return "Tools to try" as const;
+  }
+
+  if (normalized.includes("read") || normalized.includes("article") || normalized.includes("blog")) {
+    return "Reads" as const;
+  }
+
+  return null;
+}
 
 function getCategoryBand(score: number) {
   if (score <= 39) return "low";
@@ -120,7 +163,7 @@ function buildMessages(form: AuditFormData, result: AuditResult) {
     {
       role: "system",
       content:
-        "You are an AI workflow assessor. Produce a complete AI fluency report in strict JSON only. Score from 0 to 100 using this rubric: frequency of AI use, role alignment of selected use cases, prompting confidence, repeatable workflow maturity, and critical review habit. Use the deterministic baseline as evidence, not as a required final answer. Reason from the category scores, category bands, and category interpretations before writing blind spots or recommendations. Blind spots should only address areas where the score or interpretation indicates a real gap. Do not invent weaknesses in areas marked strong or fully established. Recommendations must directly respond to the weakest evidenced areas first. Return JSON only with keys: overallScore, scoreLabel, categories, strengths, blindSpots, recommendations, thirtyDayPlan, projectIdeas, narrativeSummary, sanityChecks. categories must contain exactly 4 items named Adoption, Prompting, Workflow, Judgment with scores 0-100. strengths 3 items. blindSpots 3 items. recommendations 3 items. thirtyDayPlan 4 items. projectIdeas 2 items; each item must include title, description, promptTitle, promptText. narrativeSummary should be 2-3 concise sentences. sanityChecks should contain exactly 2 concise bullets. Ground everything in the provided input. Do not invent credentials, achievements, or tools. Keep language practical and specific.",
+        "You are an AI workflow assessor. Produce a complete AI fluency report in strict JSON only. Score from 0 to 100 using this rubric: frequency of AI use, role alignment of selected use cases, prompting confidence, repeatable workflow maturity, and critical review habit. Use the deterministic baseline as evidence, not as a required final answer. Reason from the category scores, category bands, and category interpretations before writing blind spots or recommendations. Blind spots should only address areas where the score or interpretation indicates a real gap. Do not invent weaknesses in areas marked strong or fully established. Recommendations must directly respond to the weakest evidenced areas first. Return JSON only with keys: overallScore, scoreLabel, categories, strengths, blindSpots, recommendations, thirtyDayPlan, projectIdeas, narrativeSummary, sanityChecks, resources. categories must contain exactly 4 items named Adoption, Prompting, Workflow, Judgment with scores 0-100. strengths 3 items. blindSpots 3 items. recommendations 3 items. thirtyDayPlan 4 items. projectIdeas 2 items; each item must include title, description, promptTitle, promptText. narrativeSummary should be 2-3 concise sentences. sanityChecks should contain exactly 2 concise bullets. resources should include learning suggestions grouped into Free courses, Tools to try, and Reads. Aim for 2-3 items per category, but it is okay to return fewer if only a few strong suggestions are justified. Each item should include title, description, and url. Prefer real public links and include https URLs when possible. Personalize resources using the role, blind spots, weakest score areas, and overall score. For Free courses, prefer Coursera, DeepLearning.ai, YouTube, or fast.ai. For Tools to try, suggest tools relevant to the user's role and use cases. For Reads, prefer specific articles or blog posts, but a strong homepage or guide is acceptable if more specific links are not available. Ground everything in the provided input. Do not invent credentials, achievements, or tools. Keep language practical and specific.",
     },
     {
       role: "user",
@@ -257,6 +300,76 @@ function normalizeProjectIdeas(form: AuditFormData, value: unknown, fallback: Pr
   return normalized.slice(0, 2);
 }
 
+function normalizeResources(value: unknown): ResourceSection[] | null {
+  const sections = Array.isArray(value)
+    ? value
+    : value && typeof value === "object"
+      ? Object.entries(value).map(([category, items]) => ({ category, items }))
+      : [];
+
+  if (sections.length === 0) {
+    return null;
+  }
+
+  const grouped = new Map<ResourceSection["category"], ResourceItem[]>();
+
+  for (const rawSection of sections) {
+    if (!rawSection || typeof rawSection !== "object") {
+      continue;
+    }
+
+    const section = rawSection as { category?: unknown; items?: unknown };
+    const category =
+      typeof section.category === "string" ? normalizeResourceCategory(section.category) : null;
+
+    if (!category || !Array.isArray(section.items)) {
+      continue;
+    }
+
+    const existing = grouped.get(category) ?? [];
+    const items = section.items
+      .filter(
+        (item): item is Partial<ResourceItem> => Boolean(item) && typeof item === "object",
+      )
+      .map((item) => ({
+        title: typeof item.title === "string" ? item.title.trim() : "",
+        description:
+          typeof item.description === "string" ? item.description.trim() : "",
+        url: typeof item.url === "string" ? normalizeUrl(item.url) : "",
+      }))
+      .filter((item) => item.title && item.description && item.url.startsWith("https://"));
+
+    grouped.set(category, [...existing, ...items]);
+  }
+
+  const normalized = EXPECTED_RESOURCE_CATEGORIES.map((category) => {
+    const deduped = new Map<string, ResourceItem>();
+
+    for (const item of grouped.get(category) ?? []) {
+      if (!deduped.has(item.url)) {
+        deduped.set(item.url, item);
+      }
+    }
+
+    const items = Array.from(deduped.values()).slice(0, 3);
+
+    if (items.length === 0) {
+      return null;
+    }
+
+    return {
+      category,
+      items,
+    } satisfies ResourceSection;
+  }).filter((section): section is ResourceSection => Boolean(section));
+
+  if (normalized.length === 0) {
+    return null;
+  }
+
+  return normalized;
+}
+
 function normalizeGeneratedReport(
   form: AuditFormData,
   result: AuditResult,
@@ -296,6 +409,7 @@ function normalizeGeneratedReport(
     2,
   );
   const projectIdeas = normalizeProjectIdeas(form, candidate.projectIdeas, result.projectIdeas);
+  const resources = normalizeResources(candidate.resources);
 
   const ensuredStrengths = withGenericFillers(
     strengths,
@@ -339,6 +453,7 @@ function normalizeGeneratedReport(
     projectIdeas,
     narrativeSummary,
     sanityChecks: ensuredSanityChecks,
+    ...(resources ? { resources } : {}),
     source: "ai",
   } satisfies GeneratedReport;
 }

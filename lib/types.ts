@@ -68,6 +68,17 @@ export type ProjectIdea = {
   promptText?: string;
 };
 
+export type ResourceItem = {
+  title: string;
+  description: string;
+  url: string;
+};
+
+export type ResourceSection = {
+  category: "Free courses" | "Tools to try" | "Reads";
+  items: ResourceItem[];
+};
+
 export type FluencyBadge = {
   label: "AI Observer" | "AI Practitioner" | "AI Strategist" | "AI Leader";
   emoji: string;
@@ -97,6 +108,7 @@ export type ReportSource = "ai" | "deterministic";
 export type GeneratedReport = AuditResult & {
   narrativeSummary: string;
   sanityChecks: string[];
+  resources?: ResourceSection[];
   source: ReportSource;
   fallbackReason?: string;
 };

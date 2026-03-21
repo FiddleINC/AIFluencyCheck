@@ -27,6 +27,8 @@ const categoryHints: Record<string, string> = {
   Judgment: "How critically you review AI outputs before using them in real work.",
 };
 
+const AI_REPORT_CACHE_VERSION = "resources-v1";
+
 export default function ResultsPage() {
   const router = useRouter();
   const [baseResult, setBaseResult] = useState<AuditResult | null>(null);
@@ -432,6 +434,46 @@ export default function ResultsPage() {
         </ResultCard>
       </section>
 
+      {displayReport.resources && displayReport.resources.length > 0 ? (
+        <section className="mt-6">
+          <ResultCard
+            title="Resources to level up"
+            description="A personalized set of next resources based on your role, blind spots, and current fluency profile."
+          >
+            <div className="grid gap-6 lg:grid-cols-3">
+              {displayReport.resources.map((section) => (
+                <div
+                  key={section.category}
+                  className="rounded-[1.25rem] border border-[var(--border)] bg-white/75 p-5"
+                >
+                  <div className="pill text-xs font-semibold uppercase tracking-[0.14em] text-slate-700">
+                    {section.category}
+                  </div>
+                  <div className="mt-4 space-y-4">
+                    {section.items.map((item) => (
+                      <div key={`${section.category}-${item.url}`}>
+                        <a
+                          href={item.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm font-semibold text-slate-900 underline-offset-4 transition hover:text-[var(--accent-strong)] hover:underline"
+                        >
+                          {item.title}
+                        </a>
+                        <p className="mt-1 text-sm leading-6 text-slate-600">{item.description}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <p className="mt-5 text-sm text-slate-500">
+              Links are AI-suggested - verify before clicking.
+            </p>
+          </ResultCard>
+        </section>
+      ) : null}
+
       <section className="mt-6 grid gap-6 lg:grid-cols-2">
         <ResultCard title="Mini project ideas" description="Small exercises to turn AI usage into repeatable value.">
           <div className="grid gap-4">
@@ -528,6 +570,7 @@ function extractForm(result: AuditResult) {
 
 function createReportSignature(result: AuditResult) {
   return JSON.stringify({
+    version: AI_REPORT_CACHE_VERSION,
     name: result.name,
     role: result.role,
     yearsExperience: result.yearsExperience,
