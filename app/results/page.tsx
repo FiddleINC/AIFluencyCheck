@@ -286,20 +286,20 @@ export default function ResultsPage() {
             type="button"
             onClick={handleRegenerateReport}
             disabled={reportStatus === "loading"}
-            className="inline-flex h-11 items-center justify-center rounded-full border border-[var(--border)] px-5 text-sm font-semibold text-slate-700 transition hover:bg-white/70 disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex h-11 items-center justify-center whitespace-nowrap rounded-full border border-[var(--border)] px-5 text-sm font-semibold text-slate-700 transition hover:bg-white/70 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {reportStatus === "loading" ? "Regenerating..." : "Regenerate report"}
           </button>
           <Link
             href="/audit"
-            className="inline-flex h-11 items-center justify-center rounded-full border border-[var(--border)] px-5 text-sm font-semibold text-slate-700 transition hover:bg-white/70"
+            className="inline-flex h-11 items-center justify-center whitespace-nowrap rounded-full border border-[var(--border)] px-5 text-sm font-semibold text-slate-700 transition hover:bg-white/70"
           >
             Edit answers
           </Link>
           <button
             type="button"
             onClick={handleStartOver}
-            className="inline-flex h-11 items-center justify-center rounded-full bg-[var(--accent)] px-5 text-sm font-semibold text-white transition hover:bg-[var(--accent-strong)]"
+            className="inline-flex h-11 items-center justify-center whitespace-nowrap rounded-full bg-[var(--accent)] px-5 text-sm font-semibold text-white transition hover:bg-[var(--accent-strong)]"
           >
             Start over
           </button>
