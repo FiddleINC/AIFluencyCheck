@@ -10,7 +10,8 @@ export default function Home() {
           </p>
           <div className="space-y-4">
             <h1 className="max-w-2xl font-display text-5xl leading-tight text-slate-900 sm:text-6xl">
-              Find out how good you actually are at AI.
+              Find out how good you actually are at{" "}
+              <br className="hidden sm:block" />AI.
             </h1>
             <p className="max-w-xl text-lg leading-8 text-slate-600">
               Answer a few practical questions about how you use AI today and get
