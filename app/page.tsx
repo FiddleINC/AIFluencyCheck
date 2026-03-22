@@ -50,6 +50,26 @@ export default function Home() {
           </div>
         </div>
       </section>
+      <footer className="mt-6 text-center text-sm text-slate-500">
+        Built by{" "}
+        <a
+          href="https://www.linkedin.com/in/prachurjyab/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="font-medium text-slate-700 underline-offset-4 hover:underline"
+        >
+          Prachurjya Biswas
+        </a>{" "}
+        ·{" "}
+        <a
+          href="https://github.com/FiddleINC/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="font-medium text-slate-700 underline-offset-4 hover:underline"
+        >
+          GitHub
+        </a>
+      </footer>
     </main>
   );
 }
