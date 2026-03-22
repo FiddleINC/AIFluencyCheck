@@ -86,10 +86,27 @@ export function AuditForm() {
     });
   }
 
-  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     const result = buildAuditResult(form);
+
+    fetch("/api/track", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        role: form.role,
+        industry: form.industry,
+        years_experience: Number.parseInt(form.yearsExperience, 10),
+        frequency: form.usageFrequency,
+        use_cases: form.useCases,
+        primary_use_case: form.primaryUseCase,
+        prompting_confidence: form.promptingConfidence,
+        repeatable_workflows: form.repeatableWorkflows,
+        critical_review_habit: form.reviewHabit,
+      }),
+    }).catch(() => {});
+
     window.sessionStorage.setItem(FORM_STORAGE_KEY, JSON.stringify(form));
     window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(result));
     router.push("/results");
@@ -349,7 +366,7 @@ export function AuditForm() {
 
       <div className="mt-8 flex flex-col gap-4 border-t border-[var(--border)] pt-6 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm leading-6 text-slate-500">
-          Your answers stay in your browser. Nothing is saved to a server.
+          No account needed. Anonymous, non-personal usage data is collected to improve this tool. Your name and written answers are never stored.
         </p>
         <button
           type="submit"

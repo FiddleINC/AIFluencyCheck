@@ -3,10 +3,18 @@ import { Redis } from "@upstash/redis";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-const ratelimit = new Ratelimit({
+const insightsRatelimit = new Ratelimit({
   redis: Redis.fromEnv(),
   limiter: Ratelimit.slidingWindow(10, "1 h"),
   analytics: true,
+  prefix: "ai-fluency-check-insights",
+});
+
+const trackRatelimit = new Ratelimit({
+  redis: Redis.fromEnv(),
+  limiter: Ratelimit.slidingWindow(5, "1 h"),
+  analytics: true,
+  prefix: "ai-fluency-check-track",
 });
 
 export async function proxy(request: NextRequest) {
@@ -15,7 +23,10 @@ export async function proxy(request: NextRequest) {
       request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
       "anonymous";
 
-    const { success, limit, remaining, reset } = await ratelimit.limit(ip);
+    const limiter = request.nextUrl.pathname === "/api/track"
+      ? trackRatelimit
+      : insightsRatelimit;
+    const { success, limit, remaining, reset } = await limiter.limit(ip);
 
     if (!success) {
       return NextResponse.json(
@@ -38,5 +49,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: "/api/insights",
+  matcher: ["/api/insights", "/api/track"],
 };

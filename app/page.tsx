@@ -45,8 +45,9 @@ export default function Home() {
           <div className="rounded-3xl border border-[var(--border)] bg-[var(--panel-soft)] p-5">
             <p className="text-sm font-medium text-slate-500">Private by default</p>
             <p className="mt-3 text-sm leading-6 text-slate-700">
-              Nothing is stored or sent anywhere except to generate your report.
-              No account needed. Takes about 2 minutes.
+              No account needed. Anonymous, non-personal usage data is collected
+              to improve this tool. Your name and written answers are never
+              stored.
             </p>
           </div>
         </div>
